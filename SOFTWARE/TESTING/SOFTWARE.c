@@ -5,6 +5,7 @@
 //
 // Updated 16-Nov-2023 **** state machine completed and debug code removed
 // Modified 11/24/24 - Steven Lang: Added missing dependencies and fixed errors to get first build running
+// Modified 11/29/24 - Steven Lang: Added printing of current run_mode and added condition to stop when both sensors read under 40 cm
 //
 // ********************************************************************
 
@@ -242,8 +243,8 @@ void Set_PWM_out_right(int width) {
 }
 
 // Display status of testing
-void display_info(int ld, int rd, int a, int da, int dr, int cr) {
-    UARTprintf("wh count L=%d, wh count R=%d, PWM L=%d%%, PWM R=%d%%, L dist=%d cm, R dist=%d cm, ang=%d, des ang=%d, down_r=%d, cross_r=%d\n", Read_Left(), Read_Right(), (100*PWM1_1_CMPA_R+8000)/16000, (100*PWM1_1_CMPB_R+8000)/16000, ld, rd, a, da, dr, cr );
+void display_info(int ld, int rd, int a, int da, int dr, int cr, int mode) {
+    UARTprintf("wh count L=%d, wh count R=%d, PWM L=%d%%, PWM R=%d%%, L dist=%d cm, R dist=%d cm, ang=%d, des ang=%d, down_r=%d, cross_r=%d, current-mode = %d\n", Read_Left(), Read_Right(), (100*PWM1_1_CMPA_R+8000)/16000, (100*PWM1_1_CMPB_R+8000)/16000, ld, rd, a, da, dr, cr, mode );
 }
 
 int main(void)
@@ -297,7 +298,7 @@ int main(void)
             // =running and red light
             case 2:
                 GPIO_PORTF_DATA_R = 2;
-                if (down_range_dist>900.0) run_mode=3; // done after 900 cm = 9 meters
+                if (down_range_dist>900.0 && left_dist < 40 && right_dist < 40) run_mode=3; // done after 900 cm = 9 meters
                     break;
 
             // =ended and white light
@@ -397,11 +398,13 @@ int main(void)
         // synchronize
 
 
-        // display data every 5 passes
+        // display data every x passes
+            // best to default to 5, using 10 for testing
 
-        if(pass_counter++ > 5) {
+        if(pass_counter++ > 10) {
             display_info(left_dist,right_dist,angle,desired_angle, down_range_dist,
-            cross_range_dist);
+            cross_range_dist,
+            run_mode);
             pass_counter=0;
         }
 
