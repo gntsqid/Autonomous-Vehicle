@@ -6,6 +6,7 @@
 // Updated 16-Nov-2023 **** state machine completed and debug code removed
 // Modified 11/24/24 - Steven Lang: Added missing dependencies and fixed errors to get first build running
 // Modified 11/29/24 - Steven Lang: Added printing of current run_mode and added condition to stop when both sensors read under 40 cm
+// Modified 12/03/24 - Lilang Fan: Fine-tuning of the end condition to stop at 30 cm after 20 m | additional manual testing
 //
 // ********************************************************************
 
@@ -298,7 +299,7 @@ int main(void)
             // =running and red light
             case 2:
                 GPIO_PORTF_DATA_R = 2;
-                if (down_range_dist>900.0 && left_dist < 40 && right_dist < 40) run_mode=3; // done after 900 cm = 9 meters
+                if (down_range_dist > 2000.0 && left_dist < 30 && right_dist < 30) run_mode=3; // original testing is done after 900 cm = 9 meters // final fits closer to the 21 meter course length
                     break;
 
             // =ended and white light
@@ -401,10 +402,8 @@ int main(void)
         // display data every x passes
             // best to default to 5, using 10 for testing
 
-        if(pass_counter++ > 10) {
-            display_info(left_dist,right_dist,angle,desired_angle, down_range_dist,
-            cross_range_dist,
-            run_mode);
+        if(pass_counter++ > 1) {
+            display_info(left_dist,right_dist,angle,desired_angle, down_range_dist, cross_range_dist, run_mode);
             pass_counter=0;
         }
 
@@ -414,6 +413,6 @@ int main(void)
 
         // wait for end of cycle
 
-        while ((start_time-NVIC_ST_CURRENT_R)<one_tenth_sec) ;
+        while ((start_time-NVIC_ST_CURRENT_R)<one_tenth_sec);
     } // end of forever loop
 } // end of main program
