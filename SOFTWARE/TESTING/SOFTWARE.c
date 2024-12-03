@@ -169,13 +169,14 @@ void Config_Counters() {
     // B3 is timer 3B
     SYSCTL_RCGCTIMER_R |= (1<<3); /* enable clock to Timer Block 3 */
     SYSCTL_RCGCGPIO_R |= (1<<1); /* enable clock to PORTB */
+
     GPIO_PORTB_DIR_R &= ~(0x0c); /* set PB2,PB3 as input pins */
     GPIO_PORTB_PUR_R |= (0x0c); /* and a pullup */
     GPIO_PORTB_DEN_R |= (0x0c); /* set PB2,PB3 a digital pin */
     GPIO_PORTB_AFSEL_R |= (0x0c); /* enable alternate function on PB2,PB3 */
-    GPIO_PORTB_PCTL_R &= ~0x0000FF00; /* configure PB2 as T3CCP0 and PB3 as T3CCP1
-    */
+    GPIO_PORTB_PCTL_R &= ~0x0000FF00; /* configure PB2 as T3CCP0 and PB3 as T3CCP1 */
     GPIO_PORTB_PCTL_R |= 0x00007700; /* PMCx functions 7 */
+
     TIMER3_CTL_R &= ~(1<<0); /* disable TIMER3A during setup */
     TIMER3_CFG_R |= (1<<2); /* configure as 16-bit timer mode */
     TIMER3_TAMR_R = 0x13; /* up-counter, edge count, capture mode */
@@ -299,7 +300,7 @@ int main(void)
             // =running and red light
             case 2:
                 GPIO_PORTF_DATA_R = 2;
-                if (down_range_dist > 2000.0 && left_dist < 30 && right_dist < 30) run_mode=3; // original testing is done after 900 cm = 9 meters // final fits closer to the 21 meter course length
+                if (down_range_dist > 2300.0 && left_dist < 50 && right_dist < 50 && left_dist!=0 && right_dist!=0) run_mode=3; // original testing is done after 900 cm = 9 meters // final fits closer to the 21 meter course length
                     break;
 
             // =ended and white light
@@ -360,11 +361,27 @@ int main(void)
 
         desired_angle=0; // default
 
-        if (cross_range_dist> 5) desired_angle=-20;
+           // altered these for testing - Steven
+        if (cross_range_dist> 5) desired_angle=-20; // original = 20
         if (cross_range_dist<-5) desired_angle= 20;
 
-        if (left_dist <85) desired_angle = 45;
-        if (right_dist<85) desired_angle = -45;
+        /*
+        // if (left_dist < 85 && right_dist < 85) desired_angle = 0; // added contingency
+        if (left_dist < 85 && left_dist != 0) desired_angle = 25; // original = 45
+        if (right_dist < 85 && right_dist != 0) desired_angle = -25;
+        */
+
+        // added contingency
+        if (left_dist < 100 && right_dist < 100) {
+        //if (left_dist < 85 && left_dist != 0 && right_dist < 85 && right_dist!= 0) {
+            desired_angle = 0;   // Set the desired angle to 0 when both sonar readings are within range (drive straight).
+        } else if (left_dist < 100) {
+            desired_angle = 40;  // Turn right if the left sensor detects an obstacle
+        } else if (right_dist < 100) {
+            desired_angle = -40; // Turn left if the right sensor detects an obstacle
+        } else {
+        desired_angle = 0;       // Default to straight if both are clear
+        }
 
         // calculate PWM outputs
 
@@ -400,8 +417,7 @@ int main(void)
 
 
         // display data every x passes
-            // best to default to 5, using 10 for testing
-
+        // best to default to 5, using 10 for testing
         if(pass_counter++ > 1) {
             display_info(left_dist,right_dist,angle,desired_angle, down_range_dist, cross_range_dist, run_mode);
             pass_counter=0;
