@@ -369,18 +369,35 @@ int main(void)
         // if (left_dist < 85 && right_dist < 85) desired_angle = 0; // added contingency
         if (left_dist < 85 && left_dist != 0) desired_angle = 25; // original = 45
         if (right_dist < 85 && right_dist != 0) desired_angle = -25;
-        */
+
 
         // added contingency
-        if (left_dist < 100 && right_dist < 100) {
-        //if (left_dist < 85 && left_dist != 0 && right_dist < 85 && right_dist!= 0) {
+        if (left_dist < 85 && right_dist < 85) {
             desired_angle = 0;   // Set the desired angle to 0 when both sonar readings are within range (drive straight).
-        } else if (left_dist < 100) {
-            desired_angle = 40;  // Turn right if the left sensor detects an obstacle
-        } else if (right_dist < 100) {
-            desired_angle = -40; // Turn left if the right sensor detects an obstacle
+        } else if (left_dist < 85) {
+            desired_angle = 35;  // Turn right if the left sensor detects an obstacle
+        } else if (right_dist < 85) {
+            desired_angle = -35; // Turn left if the right sensor detects an obstacle
         } else {
         desired_angle = 0;       // Default to straight if both are clear
+        }
+         */
+
+        // Set desired angle based on sonar readings, with proportional turns
+        if (left_dist < 85 && right_dist < 85) {
+        desired_angle = 0; // Drive straight if both sensors are within range
+        } else if (left_dist < 85 && right_dist >= 85) {
+        // Only left side sees an obstacle; turn right based on how close the obstacle is
+        desired_angle = 10 + (85 - left_dist) / 8; // Gradual right turn based on proximity
+        } else if (right_dist < 85 && left_dist >= 85) {
+        // Only right side sees an obstacle; turn left based on how close the obstacle is
+        desired_angle = -10 - (85 - right_dist) / 8; // Gradual left turn based on proximity
+        } else {
+        desired_angle = 0; // Both sides are clear, drive straight
+        }
+        // Apply a small tolerance to prevent oscillation due to sensor noise
+        if (abs(desired_angle) < 5) {
+            desired_angle = 0; // If the angle is very small, stop adjusting and go straight
         }
 
         // calculate PWM outputs
