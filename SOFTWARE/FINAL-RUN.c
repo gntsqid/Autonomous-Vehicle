@@ -7,6 +7,7 @@
 // Modified 11/24/24 - Steven Lang: Added missing dependencies and fixed errors to get first build running
 // Modified 11/29/24 - Steven Lang: Added printing of current run_mode and added condition to stop when both sensors read under 40 cm
 // Modified 12/03/24 - Lilang Fan: Fine-tuning of the end condition to stop at 30 cm after 20 m | additional manual testing
+// Modified 12/05/24 - Steven & Lilang: Final Version
 //
 // ********************************************************************
 
@@ -46,12 +47,15 @@ const uint32_t clock_rate=16000000;
 #define pi 3.1415926
 #define ST_max 0x00ffffff
 
+// // constants
 int const half_max=10000; // for PWM
 int const max_delta_PWM=490;
 int const turn_PWM_amount=4000; // changed from 4000
 int const left_sonar=1;
 int const right_sonar=2;
 const int MAX_PWM = 15000; // changed from 16000
+
+// // for angle
 int i_atan2(int x,int y);
 int i_sin(int a);
 int i_cos(int a);
@@ -137,8 +141,6 @@ uint16_t measure_sonar(int sonar_port) {
 
     if ((GPIO_PORTB_DATA_R & (sonar_port<<6))!=0) return 0;
         fall=NVIC_ST_CURRENT_R; // got leading edge
-
-    // UARTprintf("pulse to rise = %d and rise to fall = %d\n",pulse-rise,rise-fall);
 
     while ((pulse-NVIC_ST_CURRENT_R)<forty_ms);
 
@@ -245,10 +247,13 @@ void Set_PWM_out_right(int width) {
 }
 
 // Display status of testing
+// Added current-mode to reliably verify the light
 void display_info(int ld, int rd, int a, int da, int dr, int cr, int mode) {
     UARTprintf("wh count L=%d, wh count R=%d, PWM L=%d%%, PWM R=%d%%, L dist=%d cm, R dist=%d cm, ang=%d, des ang=%d, down_r=%d, cross_r=%d, current-mode = %d\n", Read_Left(), Read_Right(), (100*PWM1_1_CMPA_R+8000)/16000, (100*PWM1_1_CMPB_R+8000)/16000, ld, rd, a, da, dr, cr, mode );
 }
 
+// The main function is the heart of the robot.
+// It controls everything, like reading data from sensors, making decisions, and telling the motors what to do.
 int main(void)
 {
     // Set the clocking to run directly from the crystal. MEANS 16 MHz
@@ -279,6 +284,8 @@ int main(void)
     int run_mode=0; // (0= POR, green light, 1= dual button start blue light for 1 sec, 2=running and green light, 3=ended and white)
     int mode_counter;
 
+    // main loop:
+    // measure distance | read encoders | adjust pwm | display
     while (1) {
         SysTick_Init();
         //
@@ -348,12 +355,6 @@ int main(void)
 
         // calculations go here
 
-        // compute travel this cycle
-
-        // calculate down and cross range travel
-        // wheel circumference (rev) about 8 cm * pi = 26 cm
-        // wheel count = 40 per rev each or 80 total
-
         down_range_dist  +=i_cos(angle)*delta_wheels*26./8000.; // div by 100 for scaling of sin and cos
         cross_range_dist +=i_sin(angle)*delta_wheels*26./8000.;
 
@@ -361,18 +362,12 @@ int main(void)
 
         desired_angle=0; // default
 
-           // altered these for testing - Steven
+        // altered these from original for testing - Steven
         if (cross_range_dist> 5) desired_angle=-20; // original = 20
         if (cross_range_dist<-5) desired_angle= 20;
 
-        /*
-        // if (left_dist < 85 && right_dist < 85) desired_angle = 0; // added contingency
-        if (left_dist < 85 && left_dist != 0) desired_angle = 25; // original = 45
-        if (right_dist < 85 && right_dist != 0) desired_angle = -25;
-        */
-
-
         // added contingency
+        // The open-space was too large for the sensor // They continued to read as 0, forcing it to turn right
         if (left_dist < 85 && right_dist < 85) {
             desired_angle = 0;   // Set the desired angle to 0 when both sonar readings are within range (drive straight).
         } else if (left_dist < 85 && left_dist != 0) {
@@ -383,25 +378,8 @@ int main(void)
         desired_angle = 0;       // Default to straight if both are clear
         }
 
-        /*
-
-        // Set desired angle based on sonar readings, with proportional turns
-        if (left_dist < 85 && right_dist < 85) {
-        desired_angle = 0; // Drive straight if both sensors are within range
-        } else if (left_dist < 85 && right_dist >= 85) {
-        // Only left side sees an obstacle; turn right based on how close the obstacle is
-        desired_angle = 10 + (85 - left_dist) / 8; // Gradual right turn based on proximity
-        } else if (right_dist < 85 && left_dist >= 85) {
-        // Only right side sees an obstacle; turn left based on how close the obstacle is
-        desired_angle = -10 - (85 - right_dist) / 8; // Gradual left turn based on proximity
-        } else {
-        desired_angle = 0; // Both sides are clear, drive straight
-        }
-        */
-
 
         // calculate PWM outputs
-
         // start at 50%
 
         left_PWM_desired = half_max;
@@ -433,9 +411,8 @@ int main(void)
 
         // synchronize
 
-
         // display data every x passes
-        // best to default to 5, using 10 for testing
+        // best to default to 5
         if(pass_counter++ > 5) {
             display_info(left_dist,right_dist,angle,desired_angle, down_range_dist, cross_range_dist, run_mode);
             pass_counter=0;
