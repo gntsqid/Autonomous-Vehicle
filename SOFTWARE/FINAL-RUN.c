@@ -47,11 +47,11 @@ const uint32_t clock_rate=16000000;
 #define ST_max 0x00ffffff
 
 int const half_max=10000; // for PWM
-int const max_delta_PWM=500;
-int const turn_PWM_amount=4000;
+int const max_delta_PWM=490;
+int const turn_PWM_amount=4000; // changed from 4000
 int const left_sonar=1;
 int const right_sonar=2;
-const int MAX_PWM = 16000;
+const int MAX_PWM = 15000; // changed from 16000
 int i_atan2(int x,int y);
 int i_sin(int a);
 int i_cos(int a);
@@ -354,8 +354,8 @@ int main(void)
         // wheel circumference (rev) about 8 cm * pi = 26 cm
         // wheel count = 40 per rev each or 80 total
 
-        down_range_dist +=i_cos(angle)*delta_wheels*26./8000.; // div by 100 for scaling of sin and cos
-        cross_range_dist+=i_sin(angle)*delta_wheels*26./8000.;
+        down_range_dist  +=i_cos(angle)*delta_wheels*26./8000.; // div by 100 for scaling of sin and cos
+        cross_range_dist +=i_sin(angle)*delta_wheels*26./8000.;
 
         // desired "steer to" angle starts at straight ahead
 
@@ -371,18 +371,20 @@ int main(void)
         if (right_dist < 85 && right_dist != 0) desired_angle = -25;
         */
 
+
         // added contingency
         if (left_dist < 85 && right_dist < 85) {
             desired_angle = 0;   // Set the desired angle to 0 when both sonar readings are within range (drive straight).
-        } else if (left_dist < 85) {
-            desired_angle = 35;  // Turn right if the left sensor detects an obstacle
-        } else if (right_dist < 85) {
-            desired_angle = -35; // Turn left if the right sensor detects an obstacle
+        } else if (left_dist < 85 && left_dist != 0) {
+            desired_angle = 30;  // Turn right if the left sensor detects an obstacle
+        } else if (right_dist < 85 && right_dist != 0) {
+            desired_angle = -30; // Turn left if the right sensor detects an obstacle
         } else {
         desired_angle = 0;       // Default to straight if both are clear
         }
 
         /*
+
         // Set desired angle based on sonar readings, with proportional turns
         if (left_dist < 85 && right_dist < 85) {
         desired_angle = 0; // Drive straight if both sensors are within range
@@ -423,17 +425,18 @@ int main(void)
         delta_right_PWM=right_PWM_desired-old_right_PWM;
         if (delta_right_PWM> max_delta_PWM) delta_right_PWM= max_delta_PWM;
 
-        if (delta_right_PWM<-max_delta_PWM) delta_right_PWM=-max_delta_PWM;
-            old_right_PWM=right_PWM_desired=old_right_PWM+delta_right_PWM;
+        if (delta_right_PWM<-max_delta_PWM) delta_right_PWM= -max_delta_PWM;
+        old_right_PWM=right_PWM_desired=old_right_PWM+delta_right_PWM;
+
         if (run_mode!=2) old_right_PWM=right_PWM_desired=0;
-            Set_PWM_out_right(right_PWM_desired);
+        Set_PWM_out_right(right_PWM_desired);
 
         // synchronize
 
 
         // display data every x passes
         // best to default to 5, using 10 for testing
-        if(pass_counter++ > 1) {
+        if(pass_counter++ > 5) {
             display_info(left_dist,right_dist,angle,desired_angle, down_range_dist, cross_range_dist, run_mode);
             pass_counter=0;
         }
