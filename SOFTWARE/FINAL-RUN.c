@@ -219,15 +219,11 @@ Init_PWM() {
     // PWM1 channel 2 setting; 100% = 16000; freq = 1000 Hz
     PWM1_1_CTL_R &= ~(1<<0); /* Disable Generator 1 counter */
     PWM1_1_CTL_R &= ~(1<<1); /* select down count mode of counter 1*/
-    PWM1_1_GENA_R = 0x000000c8; /* CLR PWM output when counter reloaded and SET when
-    matches PWMCMPA */
-    PWM1_1_GENB_R = 0x00000c08; /* CLR PWM output when counter reloaded and SET when
-    matches PWMCMPB */
+    PWM1_1_GENA_R = 0x000000c8; /* CLR PWM output when counter reloaded and SET when matches PWMCMPA */
+    PWM1_1_GENB_R = 0x00000c08; /* CLR PWM output when counter reloaded and SET when matches PWMCMPB */
     PWM1_1_LOAD_R = MAX_PWM; /* set load value for 1kHz (16MHz/16000) */
-    PWM1_1_CMPA_R = 0; /* set A duty cycle to 0% by loading of 0 to
-    PWM1CMPA */
-    PWM1_1_CMPB_R = 0; /* set B duty cycle to 0% by loading of 0 to
-    PWM1CMPB */
+    PWM1_1_CMPA_R = 0; /* set A duty cycle to 0% by loading of 0 to PWM1CMPA */
+    PWM1_1_CMPB_R = 0; /* set B duty cycle to 0% by loading of 0 to PWM1CMPB */
     PWM1_1_CTL_R = 1; /* Enable Generator 1 counter */
     PWM1_ENABLE_R = 0x0c; /* Enable PWM1 channel outputs 2 and 3 */
 }
@@ -320,46 +316,32 @@ int main(void)
         start_time=NVIC_ST_CURRENT_R;
 
         // real left sonar
-
         left_dist=measure_sonar( left_sonar);
-        //left_dist= (GPIO_PORTF_DATA_R & Left_button) ? 500 : 75; //******************* debug button simulates 75 cm
 
         // idle window
         // second half cycle
         // wait for second half cycle
-
         while ((start_time-NVIC_ST_CURRENT_R)<fifty_ms) ;
 
         // read right sonar
-
         right_dist=measure_sonar(right_sonar);
-        //right_dist= (GPIO_PORTF_DATA_R & Right_button) ? 500 : 75; //*********************** debug button simulates 75 cm
-
+        
         // read wheel counters
-
         new_left_wheel=Read_Left();
         new_right_wheel=Read_Right();
 
-        // consider a change here that sets both wheel counters to zero every cycle until voltage is applied to both motors.
-
-
         delta_wheels= (new_left_wheel-old_left_wheel) + (new_right_wheel - old_right_wheel) ;
-        //delta_wheels=3; // ****************************** debug
 
         // get approx degrees
         // wheel base about 15 cm
         // so smallest inc delta from wheels is 360 * 26 cm / 40 / 15
-
         angle=((new_left_wheel-new_right_wheel)*2+2)/5; // /2.5 rounded
-        //angle=-3; // ****************************************************** debug
 
-        // calculations go here
-
+        // calculations
         down_range_dist  +=i_cos(angle)*delta_wheels*26./8000.; // div by 100 for scaling of sin and cos
         cross_range_dist +=i_sin(angle)*delta_wheels*26./8000.;
 
         // desired "steer to" angle starts at straight ahead
-
         desired_angle=0; // default
 
         // altered these from original for testing - Steven
@@ -381,12 +363,10 @@ int main(void)
 
         // calculate PWM outputs
         // start at 50%
-
         left_PWM_desired = half_max;
         right_PWM_desired = half_max;
 
         // compute desired PWM amount
-
         if((desired_angle-angle)> 2) left_PWM_desired+=turn_PWM_amount;
         if((desired_angle-angle)<-2) right_PWM_desired+=turn_PWM_amount;
 
@@ -423,7 +403,6 @@ int main(void)
         old_right_wheel=new_right_wheel;
 
         // wait for end of cycle
-
         while ((start_time-NVIC_ST_CURRENT_R)<one_tenth_sec);
     } // end of forever loop
 } // end of main program
