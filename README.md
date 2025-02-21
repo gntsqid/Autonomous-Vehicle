@@ -22,7 +22,7 @@ The vehicle is made up of the following parts:
 
 ---
 # Contributors
-Steven Lang
+Steven Lang\
 Lilang Fan
 
 ## Results
