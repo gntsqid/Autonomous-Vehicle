@@ -9,6 +9,8 @@ Repo includes:
 - devnotes
 - images
 
+![image](https://github.com/user-attachments/assets/49560a9a-f349-44e7-8949-13988b4f07cc)
+
 ## Parts List
 The vehicle is made up of the following parts:
 - fiberglass vehicle frame
@@ -21,5 +23,10 @@ The vehicle is made up of the following parts:
 ---
 # Contributors
 Steven Lang
+Lilang Fan
+
+## Results
+Full points inlcuding bonus\
+One of two teams out of nine to reach finish line successfully
 
 
