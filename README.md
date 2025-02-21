@@ -16,10 +16,6 @@ The vehicle is made up of the following parts:
 
 ---
 # Contributors
-Lilang Fan\
 Steven Lang
 
----
-# TODO
-The project is incomplete as of this version.\
-As this is an initialization, the entire project is still required. 
+
