@@ -11,8 +11,12 @@ Repo includes:
 
 ## Parts List
 The vehicle is made up of the following parts:
-* foo
-* bar
+- fiberglass vehicle frame
+- Tiva EK-TM4C123GXL
+- L298N motor controller
+- HC-SR04 x 2
+- 3" wheels x 4
+- 9V battery pack
 
 ---
 # Contributors
